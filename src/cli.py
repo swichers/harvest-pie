@@ -30,13 +30,13 @@ def cli(ctx, force_worked, force_forecast):
 @click.option('--account', help='Harvest Account ID')
 @click.option('--forecast-account', help='Forecast Account ID')
 @click.option('--forecast-token', help='Forecast Access Token (if different from Harvest)')
-@click.option('--hours', type=float, default=None, help='Scheduled hours per week (manual override)')
-@click.option('--target', type=float, default=None, help='Target hours per week (default 30)')
+@click.option('--scheduled-hours', type=float, default=None, help='Manual override for scheduled hours')
+@click.option('--target-hours', type=float, default=None, help='Target hours per week (default 30)')
 @click.option('--default-capacity', type=float, default=None, help='Default weekly capacity fallback (default 30)')
 @click.option('--color-worked', help='Hex color for worked hours')
 @click.option('--color-remaining', help='Hex color for remaining hours')
 @click.option('--color-under-target', help='Hex color for under target hours')
-def config(token, account, forecast_account, forecast_token, hours, target, default_capacity, color_worked, color_remaining, color_under_target):
+def config(token, account, forecast_account, forecast_token, scheduled_hours, target_hours, default_capacity, color_worked, color_remaining, color_under_target):
     """Configure Harvest and Forecast API access."""
     current_config = get_config()
     
@@ -60,11 +60,11 @@ def config(token, account, forecast_account, forecast_token, hours, target, defa
     if forecast_token:
         update_config("forecast_token", forecast_token)
         
-    if hours is not None:
-        update_config("scheduled_hours", hours)
+    if scheduled_hours is not None:
+        update_config("scheduled_hours", scheduled_hours)
 
-    if target is not None:
-        update_config("target_hours", target)
+    if target_hours is not None:
+        update_config("target_hours", target_hours)
 
     if default_capacity is not None:
         update_config("default_capacity", default_capacity)
