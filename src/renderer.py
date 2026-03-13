@@ -1,14 +1,19 @@
 from term_piechart import Pie
 
-def render_pie_chart(stats):
+def render_pie_chart(stats, config=None):
     worked = stats['worked']
     missing = stats['missing']
     
+    if config is None:
+        config = {}
+        
+    color_worked = config.get('color_worked', '#89cff0')
+    color_missing = config.get('color_missing', '#ff7f7f')
+    
     # Define data with custom hex colors
-    # Bright pastel for worked, bright pastel alert red for missing
     data = [
-        {"name": "Worked", "value": worked, "color": "#89cff0"},
-        {"name": "Missing", "value": missing, "color": "#ff7f7f"},
+        {"name": "Worked", "value": worked, "color": color_worked},
+        {"name": "Missing", "value": missing, "color": color_missing},
     ]
     
     # Create pie chart

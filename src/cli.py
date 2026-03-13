@@ -18,7 +18,7 @@ def cli(ctx):
             config = get_config()
             stats = get_weekly_stats(config)
             render_summary(stats)
-            render_pie_chart(stats)
+            render_pie_chart(stats, config)
         except Exception as e:
             click.echo(f"Error fetching data from Harvest: {e}")
             sys.exit(1)
@@ -30,7 +30,9 @@ def cli(ctx):
 @click.option('--forecast-token', help='Forecast Access Token (if different from Harvest)')
 @click.option('--hours', type=float, default=None, help='Scheduled hours per week (manual override)')
 @click.option('--default-capacity', type=float, default=None, help='Default weekly capacity fallback (default 30)')
-def config(token, account, forecast_account, forecast_token, hours, default_capacity):
+@click.option('--color-worked', help='Hex color for worked hours (e.g. #89cff0)')
+@click.option('--color-missing', help='Hex color for missing hours (e.g. #ff7f7f)')
+def config(token, account, forecast_account, forecast_token, hours, default_capacity, color_worked, color_missing):
     """Configure Harvest and Forecast API access."""
     current_config = get_config()
     
@@ -59,6 +61,12 @@ def config(token, account, forecast_account, forecast_token, hours, default_capa
 
     if default_capacity is not None:
         update_config("default_capacity", default_capacity)
+
+    if color_worked:
+        update_config("color_worked", color_worked)
+    
+    if color_missing:
+        update_config("color_missing", color_missing)
         
     click.echo("Configuration saved to config.json")
 
