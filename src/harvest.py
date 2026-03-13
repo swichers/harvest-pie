@@ -50,7 +50,7 @@ def get_time_entries(config, from_date, to_date, user_id):
     response.raise_for_status()
     return response.json()
 
-def get_weekly_stats(config):
+def get_weekly_stats(config, force_worked=None, force_forecast=None):
     # Current week dates (Monday to Sunday)
     now = datetime.now()
     # Normalize today to start of day
@@ -58,61 +58,68 @@ def get_weekly_stats(config):
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
 
-    harvest_user = get_current_user(config)
-    harvest_user_id = harvest_user['id']
+    harvest_user_id = None
+    if force_worked is None:
+        harvest_user = get_current_user(config)
+        harvest_user_id = harvest_user['id']
 
     # 1. Start with Harvest capacity (fallback)
-    default_cap = config.get('default_capacity', 30.0)
-    scheduled_hours = harvest_user.get('weekly_capacity', default_cap * 3600) / 3600.0
-    # 2. Manual override always wins if present
-    if config.get('scheduled_hours'):
-        scheduled_hours = float(config['scheduled_hours'])
-    # 3. Try to get from Forecast if configured
-    elif config.get('forecast_account_id'):
-        try:
-            forecast_me = get_forecast_user(config)
-            forecast_user_id = forecast_me['current_user']['id']
-            assignments = get_forecast_assignments(config, start_of_week, end_of_week, forecast_user_id)
+    if force_forecast is not None:
+        scheduled_hours = force_forecast
+    else:
+        # Default fallback
+        default_cap = config.get('default_capacity', 30.0)
+        # We need the harvest user even for capacity fallback if forecast is missing
+        if not harvest_user_id:
+            harvest_user = get_current_user(config)
+            harvest_user_id = harvest_user['id']
 
-            forecast_total = 0
-            for assignment in assignments.get('assignments', []):
-                # Filter by user manually because the API might return more
-                if assignment.get('person_id') != forecast_user_id:
-                    continue
+        scheduled_hours = harvest_user.get('weekly_capacity', default_cap * 3600) / 3600.0
 
-                # Parse assignment dates
-                a_start = datetime.strptime(assignment['start_date'], "%Y-%m-%d")
-                a_end = datetime.strptime(assignment['end_date'], "%Y-%m-%d")
+        # 2. Manual override always wins if present
+        if config.get('scheduled_hours'):
+            scheduled_hours = float(config['scheduled_hours'])
+        # 3. Try to get from Forecast if configured
+        elif config.get('forecast_account_id'):
+            try:
+                forecast_me = get_forecast_user(config)
+                forecast_user_id = forecast_me['current_user']['id']
+                assignments = get_forecast_assignments(config, start_of_week, end_of_week, forecast_user_id)
 
-                # Intersection of assignment and current week
-                actual_start = max(start_of_week, a_start)
-                actual_end = min(end_of_week, a_end)
+                forecast_total = 0
+                for assignment in assignments.get('assignments', []):
+                    if assignment.get('person_id') != forecast_user_id:
+                        continue
 
-                if actual_start > actual_end:
-                    continue
+                    a_start = datetime.strptime(assignment['start_date'], "%Y-%m-%d")
+                    a_end = datetime.strptime(assignment['end_date'], "%Y-%m-%d")
+                    actual_start = max(start_of_week, a_start)
+                    actual_end = min(end_of_week, a_end)
 
-                # Calculate number of work days (Mon-Fri) in the overlap
-                days_diff = (actual_end - actual_start).days + 1
-                work_days = 0
-                for d in range(days_diff):
-                    current_day = actual_start + timedelta(days=d)
-                    if current_day.weekday() < 5: # 0-4 is Mon-Fri
-                        work_days += 1
+                    if actual_start > actual_end:
+                        continue
 
-                # Allocation is in seconds per day
-                forecast_total += (assignment.get('allocation', 0) * work_days / 3600.0)
+                    days_diff = (actual_end - actual_start).days + 1
+                    work_days = 0
+                    for d in range(days_diff):
+                        current_day = actual_start + timedelta(days=d)
+                        if current_day.weekday() < 5:
+                            work_days += 1
 
-            if forecast_total > 0:
-                scheduled_hours = forecast_total
-        except Exception as e:
-            # Fallback silently or log? Let's just fall back to Harvest capacity for now.
-            pass
+                    forecast_total += (assignment.get('allocation', 0) * work_days / 3600.0)
 
-    entries = get_time_entries(config, start_of_week, end_of_week, harvest_user_id)
-    worked = sum(entry['hours'] for entry in entries.get('time_entries', []))
-    
+                if forecast_total > 0:
+                    scheduled_hours = forecast_total
+            except Exception as e:
+                pass
+
+    if force_worked is not None:
+        worked = force_worked
+    else:
+        entries = get_time_entries(config, start_of_week, end_of_week, harvest_user_id)
+        worked = sum(entry['hours'] for entry in entries.get('time_entries', []))
+
     target = config.get('target_hours', 30.0)
-
     # Calculate buckets based on user logic:
     # Worked: hours actually tracked.
     # Remaining: hours scheduled in Forecast but not yet worked.

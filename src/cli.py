@@ -5,8 +5,10 @@ from .renderer import render_pie_chart, render_summary
 import sys
 
 @click.group(invoke_without_command=True)
+@click.option('--force-worked', type=float, help='Force worked hours (skip Harvest API)')
+@click.option('--force-forecast', type=float, help='Force forecast hours (skip Forecast API)')
 @click.pass_context
-def cli(ctx):
+def cli(ctx, force_worked, force_forecast):
     """Harvest Pie CLI - Weekly hours worked vs scheduled."""
     if ctx.invoked_subcommand is None:
         if not is_configured():
@@ -16,11 +18,11 @@ def cli(ctx):
         
         try:
             config = get_config()
-            stats = get_weekly_stats(config)
+            stats = get_weekly_stats(config, force_worked=force_worked, force_forecast=force_forecast)
             render_summary(stats)
             render_pie_chart(stats, config)
         except Exception as e:
-            click.echo(f"Error fetching data from Harvest: {e}")
+            click.echo(f"Error fetching data: {e}")
             sys.exit(1)
 
 @cli.command()
