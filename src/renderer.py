@@ -5,10 +5,10 @@ def render_pie_chart(stats):
     missing = stats['missing']
     
     # Define data with custom hex colors
-    # Bright pastel for worked, dark pastel for missing
+    # Bright pastel for worked, bright pastel alert red for missing
     data = [
         {"name": "Worked", "value": worked, "color": "#89cff0"},
-        {"name": "Missing", "value": missing, "color": "#4b5d67"},
+        {"name": "Missing", "value": missing, "color": "#ff7f7f"},
     ]
     
     # Create pie chart

@@ -26,11 +26,15 @@ def cli(ctx):
 @cli.command()
 @click.option('--token', help='Harvest Personal Access Token')
 @click.option('--account', help='Harvest Account ID')
-@click.option('--hours', type=float, default=None, help='Scheduled hours per week')
-def config(token, account, hours):
-    """Configure Harvest API access."""
+@click.option('--forecast-account', help='Forecast Account ID')
+@click.option('--forecast-token', help='Forecast Access Token (if different from Harvest)')
+@click.option('--hours', type=float, default=None, help='Scheduled hours per week (manual override)')
+@click.option('--default-capacity', type=float, default=None, help='Default weekly capacity fallback (default 30)')
+def config(token, account, forecast_account, forecast_token, hours, default_capacity):
+    """Configure Harvest and Forecast API access."""
     current_config = get_config()
     
+    # Harvest Config
     if not token and "access_token" not in current_config:
         token = click.prompt('Harvest Personal Access Token')
     if token:
@@ -40,9 +44,21 @@ def config(token, account, hours):
         account = click.prompt('Harvest Account ID')
     if account:
         update_config("account_id", account)
+
+    # Forecast Config
+    if not forecast_account and "forecast_account_id" not in current_config:
+        forecast_account = click.prompt('Forecast Account ID', default='')
+    if forecast_account:
+        update_config("forecast_account_id", forecast_account)
+    
+    if forecast_token:
+        update_config("forecast_token", forecast_token)
         
     if hours is not None:
         update_config("scheduled_hours", hours)
+
+    if default_capacity is not None:
+        update_config("default_capacity", default_capacity)
         
     click.echo("Configuration saved to config.json")
 
