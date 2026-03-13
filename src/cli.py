@@ -29,14 +29,16 @@ def cli(ctx):
 @click.option('--forecast-account', help='Forecast Account ID')
 @click.option('--forecast-token', help='Forecast Access Token (if different from Harvest)')
 @click.option('--hours', type=float, default=None, help='Scheduled hours per week (manual override)')
+@click.option('--target', type=float, default=None, help='Target hours per week (default 30)')
 @click.option('--default-capacity', type=float, default=None, help='Default weekly capacity fallback (default 30)')
-@click.option('--color-worked', help='Hex color for worked hours (e.g. #89cff0)')
-@click.option('--color-missing', help='Hex color for missing hours (e.g. #ff7f7f)')
-def config(token, account, forecast_account, forecast_token, hours, default_capacity, color_worked, color_missing):
+@click.option('--color-worked', help='Hex color for worked hours')
+@click.option('--color-remaining', help='Hex color for remaining hours')
+@click.option('--color-under-target', help='Hex color for under target hours')
+def config(token, account, forecast_account, forecast_token, hours, target, default_capacity, color_worked, color_remaining, color_under_target):
     """Configure Harvest and Forecast API access."""
     current_config = get_config()
     
-    # Harvest Config
+    # ... Harvest Config unchanged ...
     if not token and "access_token" not in current_config:
         token = click.prompt('Harvest Personal Access Token')
     if token:
@@ -59,14 +61,20 @@ def config(token, account, forecast_account, forecast_token, hours, default_capa
     if hours is not None:
         update_config("scheduled_hours", hours)
 
+    if target is not None:
+        update_config("target_hours", target)
+
     if default_capacity is not None:
         update_config("default_capacity", default_capacity)
 
     if color_worked:
         update_config("color_worked", color_worked)
     
-    if color_missing:
-        update_config("color_missing", color_missing)
+    if color_remaining:
+        update_config("color_remaining", color_remaining)
+
+    if color_under_target:
+        update_config("color_under_target", color_under_target)
         
     click.echo("Configuration saved to config.json")
 

@@ -109,10 +109,23 @@ def get_weekly_stats(config):
             pass
 
     entries = get_time_entries(config, start_of_week, end_of_week, harvest_user_id)
-    total_hours = sum(entry['hours'] for entry in entries.get('time_entries', []))
+    worked = sum(entry['hours'] for entry in entries.get('time_entries', []))
+    
+    target = config.get('target_hours', 30.0)
+
+    # Calculate buckets based on user logic:
+    # Worked: hours actually tracked.
+    # Remaining: hours scheduled in Forecast but not yet worked.
+    # Under Target: hours between Target and Forecast.
+    
+    # Priority is Target > Forecast
+    remaining = max(0, scheduled_hours - worked)
+    under_target = max(0, target - max(scheduled_hours, worked))
 
     return {
-        "worked": total_hours,
+        "worked": worked,
         "scheduled": scheduled_hours,
-        "missing": max(0, scheduled_hours - total_hours)
+        "target": target,
+        "remaining": remaining,
+        "under_target": under_target
     }

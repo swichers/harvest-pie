@@ -2,32 +2,62 @@ from term_piechart import Pie
 
 def render_pie_chart(stats, config=None):
     worked = stats['worked']
-    missing = stats['missing']
+    remaining = stats['remaining']
+    under_target = stats['under_target']
     
     if config is None:
         config = {}
         
-    color_worked = config.get('color_worked', '#89cff0')
-    color_missing = config.get('color_missing', '#ff7f7f')
+    # High-contrast, colorblind-friendly palette (Wong palette)
+    color_worked = config.get('color_worked', '#56B4E9')       # Sky Blue
+    color_remaining = config.get('color_remaining', '#CC79A7') # Reddish Purple
+    color_under_target = config.get('color_under_target', '#E69F00') # Orange
     
     # Define data with custom hex colors
-    data = [
-        {"name": "Worked", "value": worked, "color": color_worked},
-        {"name": "Missing", "value": missing, "color": color_missing},
-    ]
+    data = []
+    if worked > 0:
+        data.append({"name": "Worked", "value": worked, "color": color_worked})
+    if remaining > 0:
+        data.append({"name": "Remaining", "value": remaining, "color": color_remaining})
+    if under_target > 0:
+        data.append({"name": "Under Target", "value": under_target, "color": color_under_target})
     
     # Create pie chart
     try:
-        # radius=10 is a good default for terminal
+        if not data:
+            print("No hours to display.")
+            return
+            
         pie = Pie(data, radius=10)
         print("\n" + str(pie))
     except Exception as e:
         print(f"Error rendering pie chart: {e}")
 
 def render_summary(stats):
-    print(f"\nWeekly Harvest Stats:")
+    green = "\033[92m"
+    reset = "\033[0m"
+    
+    worked = stats['worked']
+    forecast = stats['scheduled']
+    target = stats['target']
+    
+    target_style = green if worked >= target else ""
+    forecast_style = green if worked >= forecast else ""
+    
+    print(f"\nWeekly Status:")
     print(f"----------------------")
-    print(f"Worked:    {stats['worked']:.2f} hrs")
-    print(f"Scheduled: {stats['scheduled']:.2f} hrs")
-    print(f"Missing:   {stats['missing']:.2f} hrs")
+    print(f"Worked:       {worked:.2f} hrs")
+    print(f"{forecast_style}Forecast:     {forecast:.2f} hrs{reset if forecast_style else ''}")
+    print(f"{target_style}Target:       {target:.2f} hrs{reset if target_style else ''}")
+    print(f"----------------------")
+    
+    if stats['remaining'] > 0:
+        print(f"Remaining to work: {stats['remaining']:.2f} hrs")
+    
+    if stats['under_target'] > 0:
+        print(f"FLAG: Under target by {stats['under_target']:.2f} hrs")
+    elif stats['worked'] >= stats['target']:
+        print("Success: Target achieved!")
+    elif stats['scheduled'] >= stats['target'] and stats['remaining'] == 0:
+         print("Success: Target achieved!")
     print(f"----------------------")
