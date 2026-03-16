@@ -4,12 +4,13 @@ import sys
 
 BASE_URL = "https://api.harvestapp.com/v2"
 FORECAST_URL = "https://api.forecastapp.com"
+DEFAULT_USER_AGENT = "Harvest Pie CLI (https://github.com/swichers/harvest-pie)"
 
 def get_headers(config):
     return {
         "Authorization": f"Bearer {config['access_token']}",
         "Harvest-Account-Id": str(config['account_id']),
-        "User-Agent": "Harvest Pie CLI (https://github.com/swichers/harvest-pie)"
+        "User-Agent": config.get("user_agent", DEFAULT_USER_AGENT)
     }
 
 def get_forecast_headers(config):
@@ -17,7 +18,7 @@ def get_forecast_headers(config):
     return {
         "Authorization": f"Bearer {token}",
         "Forecast-Account-Id": str(config['forecast_account_id']),
-        "User-Agent": "Harvest Pie CLI (https://github.com/swichers/harvest-pie)"
+        "User-Agent": config.get("user_agent", DEFAULT_USER_AGENT)
     }
 
 def get_current_user(config):

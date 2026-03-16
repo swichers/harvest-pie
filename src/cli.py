@@ -36,7 +36,8 @@ def cli(ctx, force_worked, force_forecast):
 @click.option('--color-worked', help='Hex color for worked hours')
 @click.option('--color-remaining', help='Hex color for remaining hours')
 @click.option('--color-under-target', help='Hex color for under target hours')
-def config(token, account, forecast_account, forecast_token, scheduled_hours, target_hours, default_capacity, color_worked, color_remaining, color_under_target):
+@click.option('--user-agent', help='Custom User-Agent string')
+def config(token, account, forecast_account, forecast_token, scheduled_hours, target_hours, default_capacity, color_worked, color_remaining, color_under_target, user_agent):
     """Configure Harvest and Forecast API access."""
     current_config = get_config()
     
@@ -77,6 +78,9 @@ def config(token, account, forecast_account, forecast_token, scheduled_hours, ta
 
     if color_under_target:
         update_config("color_under_target", color_under_target)
+
+    if user_agent:
+        update_config("user_agent", user_agent)
         
     click.echo("Configuration saved to config.json")
 
