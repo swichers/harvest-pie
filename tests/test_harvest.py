@@ -25,6 +25,7 @@ def test_calculate_stats_under_target():
     stats = calculate_stats(worked=35, scheduled=35, target=40)
     assert stats['worked'] == 35.0
     assert stats['remaining'] == 0.0
+    assert stats['gap'] == 5.0
     assert stats['under_target'] == 5.0
 
 def test_calculate_stats_success():
@@ -32,6 +33,7 @@ def test_calculate_stats_success():
     stats = calculate_stats(worked=35, scheduled=35, target=35)
     assert stats['worked'] == 35.0
     assert stats['remaining'] == 0.0
+    assert stats['gap'] == 0.0
     assert stats['under_target'] == 0.0
 
 def test_calculate_stats_remaining():
@@ -39,7 +41,8 @@ def test_calculate_stats_remaining():
     stats = calculate_stats(worked=30, scheduled=35, target=35)
     assert stats['worked'] == 30.0
     assert stats['remaining'] == 5.0
-    assert stats['under_target'] == 0.0
+    assert stats['gap'] == 0.0
+    assert stats['under_target'] == 5.0
 
 def test_get_weekly_stats_force(mocker):
     # Testing that force_worked and force_forecast bypass API
@@ -54,7 +57,8 @@ def test_get_weekly_stats_force(mocker):
     assert stats['worked'] == 20.0
     assert stats['scheduled'] == 25.0
     assert stats['remaining'] == 5.0
-    assert stats['under_target'] == 5.0 # 30 - 25
+    assert stats['gap'] == 5.0 # 30 - 25
+    assert stats['under_target'] == 10.0 # 30 - 20
     
     mock_user.assert_not_called()
     mock_entries.assert_not_called()
@@ -103,4 +107,5 @@ def test_get_weekly_stats_api_flow(mocker):
     assert stats['scheduled'] == 35.0 # From Forecast
     assert stats['target'] == 40.0
     assert stats['remaining'] == 5.0
-    assert stats['under_target'] == 5.0 # 40 - 35
+    assert stats['gap'] == 5.0 # 40 - 35
+    assert stats['under_target'] == 10.0 # 40 - 30

@@ -2,12 +2,14 @@ from src.renderer import render_pie_chart, render_summary
 
 def test_display():
     # Mock stats matching new structure
+    # Target 35, Forecast 30, Worked 20
     stats = {
-        "worked": 28.5,
-        "scheduled": 35.0,
-        "target": 30.0,
-        "remaining": 6.5,
-        "under_target": 0.0
+        "worked": 20.0,
+        "scheduled": 30.0,
+        "target": 35.0,
+        "remaining": 10.0,
+        "under_target": 15.0,
+        "gap": 5.0
     }
     print("Testing summary display:")
     render_summary(stats)

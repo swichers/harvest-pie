@@ -3,7 +3,7 @@ from term_piechart import Pie
 def render_pie_chart(stats, config=None):
     worked = stats['worked']
     remaining = stats['remaining']
-    under_target = stats['under_target']
+    gap = stats.get('gap', 0.0)
     
     if config is None:
         config = {}
@@ -19,8 +19,8 @@ def render_pie_chart(stats, config=None):
         data.append({"name": "Worked", "value": worked, "color": color_worked})
     if remaining > 0:
         data.append({"name": "Remaining", "value": remaining, "color": color_remaining})
-    if under_target > 0:
-        data.append({"name": "Under Target", "value": under_target, "color": color_under_target})
+    if gap > 0:
+        data.append({"name": "Gap", "value": gap, "color": color_under_target})
     
     # Create pie chart
     try:
@@ -40,6 +40,8 @@ def render_summary(stats):
     worked = stats['worked']
     forecast = stats['scheduled']
     target = stats['target']
+    under_target = stats['under_target']
+    remaining = stats['remaining']
     
     target_style = green if worked >= target else ""
     forecast_style = green if worked >= forecast else ""
@@ -51,13 +53,15 @@ def render_summary(stats):
     print(f"{target_style}Target:       {target:.2f} hrs{reset if target_style else ''}")
     print(f"----------------------")
     
-    if stats['remaining'] > 0:
-        print(f"Remaining to work: {stats['remaining']:.2f} hrs")
+    if remaining > 0:
+        print(f"Remaining to work: {remaining:.2f} hrs")
     
-    if stats['under_target'] > 0:
-        print(f"FLAG: Under target by {stats['under_target']:.2f} hrs")
-    elif stats['worked'] >= stats['target']:
+    if under_target > 0:
+        print(f"FLAG: Under target by {under_target:.2f} hrs")
+        if stats.get('gap', 0) > 0:
+             print(f"      ({stats['gap']:.2f} hrs unscheduled)")
+    elif worked >= target:
         print("Success: Target achieved!")
-    elif stats['scheduled'] >= stats['target'] and stats['remaining'] == 0:
+    elif forecast >= target and remaining == 0:
          print("Success: Target achieved!")
     print(f"----------------------")

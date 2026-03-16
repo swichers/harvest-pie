@@ -68,15 +68,19 @@ def calculate_stats(worked, scheduled, target):
     Calculate worked, remaining, and under_target buckets.
     Worked: actually tracked.
     Remaining: Forecast - Worked.
-    Under Target: Target - max(Forecast, Worked).
+    Gap: Target - max(Forecast, Worked) (Unscheduled part of target).
+    Under Target: Target - Worked (Total part of target not yet worked).
     """
     remaining = max(0.0, scheduled - worked)
-    under_target = max(0.0, target - max(scheduled, worked))
+    gap = max(0.0, target - max(scheduled, worked))
+    under_target = max(0.0, target - worked)
+    
     return {
         "worked": float(worked),
         "scheduled": float(scheduled),
         "target": float(target),
         "remaining": float(remaining),
+        "gap": float(gap),
         "under_target": float(under_target)
     }
 
