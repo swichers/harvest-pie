@@ -38,6 +38,8 @@ def render_summary(stats):
     reset = "\033[0m"
     
     worked = stats['worked']
+    billable_worked = stats.get('billable_worked', 0.0)
+    billable_target = stats.get('billable_target', 0.0)
     forecast = stats['scheduled']
     target = stats['target']
     under_target = stats['under_target']
@@ -45,10 +47,15 @@ def render_summary(stats):
     
     target_style = green if worked >= target else ""
     forecast_style = green if worked >= forecast else ""
+    billable_style = green if billable_worked >= billable_target and billable_target > 0 else ""
     
     print(f"\nWeekly Status:")
     print(f"----------------------")
     print(f"Worked:       {worked:.2f} hrs")
+    if billable_target > 0:
+        print(f"{billable_style}Billable:     {billable_worked:.2f} / {billable_target:.2f} hrs{reset if billable_style else ''}")
+    else:
+        print(f"Billable:     {billable_worked:.2f} hrs")
     print(f"{forecast_style}Forecast:     {forecast:.2f} hrs{reset if forecast_style else ''}")
     print(f"{target_style}Target:       {target:.2f} hrs{reset if target_style else ''}")
     print(f"----------------------")

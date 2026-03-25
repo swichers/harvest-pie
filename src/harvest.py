@@ -63,7 +63,7 @@ def get_work_days_count(start, end):
             work_days += 1
     return work_days
 
-def calculate_stats(worked, scheduled, target):
+def calculate_stats(worked, scheduled, target, billable_worked=0.0, billable_target_ratio=None):
     """
     Calculate worked, remaining, and under_target buckets.
     Worked: actually tracked.
@@ -75,8 +75,14 @@ def calculate_stats(worked, scheduled, target):
     gap = max(0.0, target - max(scheduled, worked))
     under_target = max(0.0, target - worked)
     
+    billable_target = 0.0
+    if billable_target_ratio is not None:
+        billable_target = target * billable_target_ratio
+
     return {
         "worked": float(worked),
+        "billable_worked": float(billable_worked),
+        "billable_target": float(billable_target),
         "scheduled": float(scheduled),
         "target": float(target),
         "remaining": float(remaining),
@@ -140,12 +146,18 @@ def get_weekly_stats(config, force_worked=None, force_forecast=None):
                 pass
 
     # 2. Determine worked hours
+    billable_worked = 0.0
     if force_worked is not None:
         worked = force_worked
     else:
         entries = get_time_entries(config, start_of_week, end_of_week, harvest_user_id)
-        worked = sum(entry['hours'] for entry in entries.get('time_entries', []))
+        worked = 0.0
+        for entry in entries.get('time_entries', []):
+            worked += entry['hours']
+            if entry.get('billable', False):
+                billable_worked += entry['hours']
 
     # 3. Calculate target and final stats
     target = config.get('target_hours', 30.0)
-    return calculate_stats(worked, scheduled_hours, target)
+    billable_target_ratio = config.get('billable_target_ratio')
+    return calculate_stats(worked, scheduled_hours, target, billable_worked=billable_worked, billable_target_ratio=billable_target_ratio)
